@@ -1,0 +1,121 @@
+"use client"
+
+import { useActionState, useState, useEffect } from "react"
+import { useFormStatus } from "react-dom"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2, Brain } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { signIn } from "@/lib/actions"
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button
+      type="submit"
+      disabled={pending}
+      className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium h-11 shadow-lg transition-all duration-200"
+    >
+      {pending ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Signing in...
+        </>
+      ) : (
+        "Sign In"
+      )}
+    </Button>
+  )
+}
+
+export default function LoginForm() {
+  const router = useRouter()
+  const [state, formAction] = useActionState(signIn, null)
+  const [isClient, setIsClient] = useState(false)
+
+  // Ensure we're on the client side to prevent hydration mismatch
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Handle successful login by redirecting
+  useEffect(() => {
+    if (state?.success && isClient) {
+      console.log("Login successful, redirecting to dashboard...")
+      // Use window.location for a hard redirect to ensure session is properly established
+      window.location.href = "/dashboard"
+    }
+  }, [state, isClient])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4">
+      <Card className="w-full max-w-md backdrop-blur-sm bg-white/80 border-emerald-200/50 shadow-xl">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-3 rounded-full shadow-lg">
+              <Brain className="h-8 w-8 text-white" />
+            </div>
+          </div>
+          <div>
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent">
+              Welcome back
+            </CardTitle>
+            <CardDescription className="text-slate-600">Sign in to your AI CRM account</CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <form action={formAction} className="space-y-4">
+            {state?.error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {state.error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+                Email
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@company.com"
+                required
+                className="h-11 border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="h-11 border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500"
+              />
+            </div>
+
+            <SubmitButton />
+
+            <div className="text-center text-sm text-slate-600">
+              Don't have an account?{" "}
+              <Link
+                href="/auth/sign-up"
+                className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+              >
+                Sign up
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
